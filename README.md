@@ -1,245 +1,211 @@
 
+# Finance_Manager
 
-A comprehensive personal finance management web application built for students. Track expenses, manage tuition income, split bills with friends, and get AI-powered financial insights.
+A personal finance management web application for students to track expenses, manage tuition income, split group bills, and get AI-assisted financial insights.
+
+Repository: https://github.com/fahin99/Finance_Manager
+Maintainer: @fahin99
 
 ---
-
-## 🚀 Deployment (Railway)
-
-This app is also deployed in Railway
-
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.1.2-green)
 ![License](https://img.shields.io/badge/License-Educational-orange)
 
+## Features
 
-## ✨ Features
+- Personal expense tracking with category-level insights
+- Group expense management and bill splitting
+- Tuition scheduling and progress tracking
+- Dashboard analytics and summary cards
+- AI assistant (FinBuddy chatbot)
+- Email notifications and reminders
+- User profile and account settings
+- Real-time updates for collaborative flows
 
-### 💳 Personal Expense Tracking
-
-### 👥 Group Expenses & Bill Splitting
-
-### 🎓 Tuition Management
-
-### 📊 Dashboard & Analytics
-
-### 🤖 AI-Powered Chatbot (FinBuddy Assistant)
-
-### 📧 Email Notifications
-
-### 🔐 User Profiles
-
-### ⚡ Real-time Features
-
-# 💰 FinBuddy
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technologies |
 |----------|-------------|
-| **Backend** | Flask 3.1.2, Flask-SQLAlchemy, Flask-Login |
-| **Frontends** | HTML, CSS and a little bit of JS |
-| **Real-time** | Flask-SocketIO, Flask-APScheduler |
-| **AI/ML** | Groq API (Mixtral-8x7b-32768) |
+| Backend | Flask 3.1.2, Flask-SQLAlchemy, Flask-Login |
+| Frontend | HTML, CSS, JavaScript |
+| Real-time | Flask-SocketIO, Flask-APScheduler |
+| AI/ML | Groq API (Mixtral-8x7b-32768) |
+| Database | SQLite (development), PostgreSQL-ready (production) |
 
-## 📁 Project Structure
+## Architecture And Workflow
 
+The app follows a standard Flask blueprint architecture:
+
+- `app.py`: Application entry point, app setup, extension wiring, and route registration
+- `routes/`: HTTP route blueprints by domain
+- `services/`: Business logic and helper service modules
+- `templates/`: Jinja2 templates for all pages and email layouts
+- `static/`: CSS, JS, images, and other front-end assets
+- `api/`: API-layer modules and integrations
+- `tools/`: Utility scripts for maintenance and exports
+- `instance/`: Local runtime data such as SQLite database files
+
+### Key Folder Responsibilities
+
+- `routes/auth.py`: Register, login, logout, and session workflows
+- `routes/dashboard.py`: Dashboard rendering and aggregated user stats
+- `routes/expense.py`: Personal expense CRUD and related logic
+- `routes/group.py`: Group creation, split calculations, and balances
+- `routes/tuition.py`: Tuition records, schedules, and reporting actions
+- `routes/profile.py`: Profile update and user settings
+- `routes/notifications.py`: Notification and reminder endpoints
+- `routes/database.py`: Database-related route helpers
+- `services/chat_context.py`: Context builder for AI chatbot prompts
+
+## Project Structure
+
+```text
+Finance_Manager/
+|-- app.py
+|-- requirements.txt
+|-- package.json
+|-- run_app.bat
+|-- setup.bat
+|-- runtime.txt
+|-- API_ROUTES.md
+|-- routes/
+|   |-- __init__.py
+|   |-- auth.py
+|   |-- dashboard.py
+|   |-- database.py
+|   |-- expense.py
+|   |-- group.py
+|   |-- notifications.py
+|   |-- profile.py
+|   `-- tuition.py
+|-- services/
+|   |-- __init__.py
+|   `-- chat_context.py
+|-- templates/
+|-- static/
+|-- api/
+|-- tools/
+|-- exports/
+`-- instance/
 ```
-FinBuddy/
-├── app.py                      # Main Flask application
-├── database.py                 # Database initialization script
-├── requirements.txt            # Python dependencies
-├── .env.example               # Environment variables template
-│
-├── routes/                    # Route blueprints
-│   ├── auth.py               # Authentication (login/register)
-│   ├── dashboard.py          # Dashboard views
-│   ├── expense.py            # Personal expense management
-│   ├── group.py              # Group expense management
-│   ├── tuition.py            # Tuition tracking & PDF export
-│   ├── profile.py            # User profile management
-│
-├── services/                  # Business logic services
-│   └── chat_context.py       # RAG-style chatbot context builder
-│
-├── tools/                     # CLI utilities
-│   └── export_anonymized_analytics.py  # Analytics export (no PII)
-│
-├── templates/                 # Jinja2 HTML templates
-│   ├── base.html             # Base layout template
-│   ├── landing.html          # Landing page
-│   ├── auth_new.html         # Login/Register page
-│   ├── dashboard.html        # Main dashboard
-│   ├── personal.html         # Personal expenses view
-│   ├── groupDetails.html     # Group details & balances
-│   ├── tuition.html          # Tuition management
-│   ├── profile_*.html        # Profile pages
-│   └── email_*.html          # Email templates
-│
-├── static/                    # Static assets
-│   ├── css/                  # Stylesheets
-│   │   ├── theme.css        # Global theme & variables
-│   │   ├── dashboard.css    # Dashboard styles
-│   │   └── ...
-├── instance/                  # Instance-specific files
-│   └── finance.db            # SQLite database (local)
-```
 
-- PostgreSQL (for production) or SQLite (for development)
-
-### Quick Start (Windows)
+## Quick Start (Windows)
 
 ```bash
-# Clone the repository
-git clone https://github.com/Nahid-iiqbal/ECEFC-Money-Manager-Demo-.git
-cd ECEFC-Money-Manager-Demo-
-
-# Run setup script
+git clone https://github.com/fahin99/Finance_Manager.git
+cd Finance_Manager
 setup.bat
 ```
 
-### Manual Setup
+## Manual Setup
 
-1. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate      # Windows
-   source venv/bin/activate   # Linux/Mac
-   ```
+1. Create a virtual environment
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
 
-3. **Configure environment variables**
-   Edit `.env` with your settings:
-   ```env
-   GROQ_API_KEY=your_key
-   GROQ_MODEL_NAME=ai_model
-   SECRET_KEY=secret_key
-   DATABASE_URL=your_database
-   # Mail settings for weekly reports
-   MAIL_SERVER=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USE_TLS=true
-   MAIL_USE_SSL=false
-   MAIL_USERNAME=email
-   MAIL_PASSWORD=password
-   MAIL_DEFAULT_SENDER=email
+2. Install dependencies
 
-   # Weekly report scheduler
-   ENABLE_WEEKLY_REPORTS=true
-   WEEKLY_REPORT_DAY=sun
-   WEEKLY_REPORT_HOUR=8
+```bash
+pip install -r requirements.txt
+```
 
+3. Configure environment variables in `.env`
 
-   # Tuition reminders (email)
-   ENABLE_TUITION_REMINDERS=true
+```env
+GROQ_API_KEY=your_key
+GROQ_MODEL_NAME=ai_model
+SECRET_KEY=secret_key
+DATABASE_URL=your_database
 
-   ```
+# Mail settings for weekly reports
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=true
+MAIL_USE_SSL=false
+MAIL_USERNAME=email
+MAIL_PASSWORD=password
+MAIL_DEFAULT_SENDER=email
 
-4. **Run the application**
-   ```bash
-   python app.py
-   ```
+# Weekly report scheduler
+ENABLE_WEEKLY_REPORTS=true
+WEEKLY_REPORT_DAY=sun
+WEEKLY_REPORT_HOUR=8
 
-5. **Access the application**
-   
-   Open: `http://localhost:5000`
+# Tuition reminders
+ENABLE_TUITION_REMINDERS=true
+```
 
----
+4. Run the application
 
-## 📖 API Documentation
+```bash
+python app.py
+```
 
-See [API_ROUTES.md](API_ROUTES.md) for complete API documentation including:
-- Authentication endpoints
-- Personal expense CRUD operations
-- Group management APIs
-- Tuition tracking endpoints
-- Statistics and analytics APIs
+5. Open the app
+
+http://localhost:5000
 
 ---
 
-## 🎯 Usage Guide
+## API Documentation
+
+See [API_ROUTES.md](API_ROUTES.md) for endpoint-level details covering authentication, expenses, groups, tuition, and analytics.
+
+## Usage Guide
 
 ### Personal Expenses
-1. Navigate to **Personal Expenses** from the dashboard
-2. Click **Add Expense** to log a new expense
-3. Select category, enter amount and description
-4. View spending statistics and trends
+1. Open the personal expenses page from the dashboard.
+2. Add expense records with amount, category, and notes.
+3. Review category-level spending insights.
 
 ### Group Expenses
-1. Create a new group or join with a code
-2. Add expenses and split among members
-3. Track balances - who owes whom
+1. Create or join a group.
+2. Add shared expenses and split among members.
+3. Check balances to see who owes whom.
 
 ### Tuition Management
-1. Add tuition records with student details
-2. Set scheduled days and class times
-3. Track class completion progress
-4. Reschedule classes when needed
-5. Export PDF reports for records
+1. Add tuition/student records.
+2. Set schedule details and track completion progress.
+3. Export data where needed.
 
-### AI Chatbot
-1. Click the chat icon on the dashboard
-2. Ask questions like:
-   - "What's my spending this week?"
-   - "Which category do I spend most on?"
-   - "How can I save more money?"
+### FinBuddy Chatbot
+1. Open the chatbot from the dashboard.
+2. Ask spending and saving questions based on your tracked data.
 
----
-
-## 🔧 Configuration Options
+## Configuration Reference
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `SECRET_KEY` | Flask secret key for sessions | Required |
-| `DATABASE_URL` | PostgreSQL connection string | SQLite |
+| `SECRET_KEY` | Flask session/signing key | Required |
+| `DATABASE_URL` | PostgreSQL connection string | SQLite fallback |
 | `GROQ_API_KEY` | Groq API key for chatbot | Optional |
 | `ENABLE_WEEKLY_REPORTS` | Send weekly email reports | `true` |
 | `ENABLE_TUITION_REMINDERS` | Send tuition reminders | `true` |
 | `WEEKLY_REPORT_DAY` | Day for weekly reports | `sun` |
 | `WEEKLY_REPORT_HOUR` | Hour for weekly reports | `8` |
 
----
+## Security Notes
 
-## 🛡️ Security Notes
+- Use a strong random value for `SECRET_KEY`.
+- Keep `.env` out of version control.
+- Use HTTPS and a production-grade database in deployment.
+- Configure secure mail credentials and least-privilege access.
 
-⚠️ **Important for Production**:
-- Change `SECRET_KEY` to a strong random value
-- Never commit `.env` to version control
-- Use HTTPS in production
-- Configure proper CORS settings
-- Use strong passwords for user accounts
-- PostgreSQL recommended for production
+## Contributing
 
----
+1. Fork the repository.
+2. Create a feature branch.
+3. Commit your changes.
+4. Push and open a pull request.
 
-## 🤝 Contributing
+## License
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Educational project for student-focused learning and development.
 
----
+## Support
 
-## 📄 License
-
-This project is for educational purposes for BUET students.
-
----
-
-## 💖 Contributors
-
-Made with ❤️ for the Student community
-
----
-
-## 📞 Support
-
-For issues or feature requests, please open a GitHub issue.
+For issues or feature requests, open an issue in this repository.
