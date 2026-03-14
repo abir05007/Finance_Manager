@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Personal Expenses - FinBuddy{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/personal.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="expense-page">
+    <div class="page-header">
+        <h1 class="page-title">💰 Expenses</h1>
+        <p class="page-subtitle">Track and manage your spending</p>
+    </div>
+
+    <!-- Expense List Section -->
+    <section class="expense-list-section" aria-labelledby="expense-list-title">
+        <h2 id="expense-list-title" class="section-title">Your Expenses</h2>
+        
+        {% if expenses %}
+        <div class="table-wrapper">
+            <table class="expense-table" role="table">
+                <thead>
+                    <tr role="row">
+                        <th scope="col" role="columnheader">Date</th>
+                        <th scope="col" role="columnheader">Name</th>
+                        <th scope="col" role="columnheader">Category</th>
+                        <th scope="col" role="columnheader">Type</th>
+                        <th scope="col" role="columnheader">Amount</th>
+                        <th scope="col" role="columnheader">Description</th>
+                        <th scope="col" role="columnheader">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in expenses %}
+                    <tr role="row" class="expense-row">
+                        <td role="cell" data-label="Date">{{ e.date.strftime('%Y-%m-%d') if e.date else 'N/A' }}</td>
+                        <td role="cell" data-label="Name">{{ e.name }}</td>
+                        <td role="cell" data-label="Category">
+                            <span class="category-badge category-{{ (e.category|lower) if e.category else 'other' }}">
+                                {{ e.category if e.category else 'Other' }}
+                            </span>
+                        </td>
+                        <td role="cell" data-label="Type">
+                            {% if e.type %}
+                            <span class="type-badge type-{{ e.type|lower }}">
+                                {{ '👤' if e.type == 'Personal' else '👥' }} {{ e.type }}
+                            </span>
+                            {% else %}
+                            <span class="type-badge type-unknown">-</span>
+                            {% endif %}
+                        </td>
+                        <td role="cell" data-label="Amount" class="amount">৳{{ "%.2f"|format(e.amount) }}</td>
+                        <td role="cell" data-label="Description" class="description">
+                            {{ (e.description[:50] + '...') if (e.description and e.description|length > 50) else (e.description or '-') }}
+                        </td>
+                        <td role="cell" data-label="Action">
+                            <form action="{{ url_for('expense.delete_expense', expense_id=e.id) }}" method="POST" style="display:inline;">
+                                <button class="btn btn-delete" type="submit" aria-label="Delete expense: {{ e.name }}">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="expense-summary">
+            <div class="total-box">
+                <span class="total-label">Total Expenses:</span>
+                <span class="total-amount">৳{{ "%.2f"|format(total) }}</span>
+            </div>
+            
+            {% if category_totals %}
+            <div class="category-summary">
+                <h3>Spending by Category</h3>
+                <ul class="category-list">
+                    {% for category, amount in category_totals.items() %}
+                    <li class="category-item">
+                        <span class="category-name">{{ category }}:</span>
+                        <span class="category-amount">৳{{ "%.2f"|format(amount) }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p class="empty-message">📭 No expenses added yet.</p>
+            <p class="empty-hint">Add your first expense using the form below!</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Quick Action Link -->
+    <div class="action-link-section">
+        <a href="{{ url_for('expense.add_expense_form') }}" class="btn btn-primary btn-lg">
+            ➕ Add New Expense
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,742 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FinBuddy{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block header %}
+<!-- Header with Brand and Theme Toggle (Dashboard Only) -->
+<header>
+    <div class="container">
+        <div class="header-content">
+            <a href="{{ url_for('landing') }}" class="brand-link"><h1 class="brand-title flicker">💰 <span class="fb-brand fb-brand-animated">FinBuddy</span></h1></a>
+            <div class="header-right">
+                {% if current_user.is_authenticated %}
+                    {% set display_name = (current_user.profile.profile_name if current_user.profile and current_user.profile.profile_name else current_user.username).split()[0] %}
+                    <p class="welcome-text fb-welcome">Welcome back, <strong>{{ display_name }}</strong>!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h2 class="flicker">📊 Control Room</h2>
+    <p class="dashboard-subtitle">Track your expenses, groups, and tuition at a glance</p>
+</div>
+
+<!-- Profile Alert if not created -->
+{% if not current_user.profile %}
+<div class="profile-alert">
+    <div class="alert alert-info">
+        <strong>👤 Complete Your Profile!</strong>
+        <p>Set up your profile to unlock all features.</p>
+        <a href="{{ url_for('profile.create_profile') }}" class="btn btn-sm">Create Profile</a>
+    </div>
+</div>
+{% endif %}
+
+<div class="summary-cards">
+    <div class="summary-card card-purple" data-stat="personal-expenses">
+        <div class="card-icon">💰</div>
+        <div class="card-content">
+            <h3>Expenses</h3>
+            <p class="card-subtitle">This Month</p>
+            <p class="card-amount stat-amount">৳{{ "%.2f"|format(personal_this_month) }}</p>
+        </div>
+    </div>
+    
+    <div class="summary-card card-blue" data-stat="group-balance">
+        <div class="card-icon">👥</div>
+        <div class="card-content">
+            <h3>Group Balance</h3>
+            <p class="card-subtitle">Outstanding</p>
+            <p class="card-amount stat-amount {{ balance_status }}">
+                {% if group_balance >= 0 %}
+                    +৳{{ "%.2f"|format(group_balance) }}
+                {% else %}
+                    -৳{{ "%.2f"|format(group_balance|abs) }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    <div class="summary-card card-orange" data-stat="tuition-progress">
+        <div class="card-icon">🎓</div>
+        <div class="card-content">
+            <h3>Pending Tuition</h3>
+            <p class="card-subtitle">Classes Completed</p>
+            <p class="card-amount stat-amount">{{ completed_classes }}/{{ total_classes }}</p>
+        </div>
+    </div>
+    
+    <div class="summary-card card-green" data-stat="total-expenses">
+        <div class="card-icon">📊</div>
+        <div class="card-content">
+            <h3>Total Expenses</h3>
+            <p class="card-subtitle">All Time</p>
+            <p class="card-amount stat-amount">৳{{ "%.2f"|format(total_all_time) }}</p>
+        </div>
+    </div>
+    
+</div>
+
+<div class="quick-actions-section">
+    <h3>⚡ Quick Actions</h3>
+    <div class="quick-actions">
+        <button class="action-btn btn-purple" onclick="window.location.href='{{ url_for('expense.add_expense_form') }}';">
+            <span class="btn-icon">➕</span>
+            Add Expense
+        </button>
+        <button class="action-btn btn-blue" onclick="window.location.href='{{ url_for('group.my_groups') }}';">
+            <span class="btn-icon">➕</span>
+            Manage Groups
+        </button>
+        <button class="action-btn btn-orange" onclick="window.location.href='{{ url_for('tuition.add_tuition') }}';">
+            <span class="btn-icon">➕</span>
+            Add Tuition Payment
+        </button>
+    </div>
+</div>
+
+<div class="recent-activity-section collapsible-section">
+    <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="recent-activity-content" data-section="recentActivity">
+        <h3>📝 Recent Activity</h3>
+        <span class="collapse-icon" aria-hidden="true">▼</span>
+    </div>
+    <div class="section-content" id="recent-activity-content">
+    {% if recent_activities %}
+        <div class="activity-list">
+            {% for activity in recent_activities %}
+                <div class="activity-item">
+                    <div class="activity-icon {{ activity.type|lower }}">
+                        {% if activity.type == 'Personal' %}💰
+                        {% elif activity.type == 'Group' %}👥
+                        {% else %}🎓{% endif %}
+                    </div>
+                    <div class="activity-details">
+                        <div class="activity-header">
+                            <span class="activity-type badge-{{ activity.type|lower }}">{{ activity.type }}</span>
+                            <span class="activity-date">{{ activity.date }}</span>
+                        </div>
+                        <p class="activity-description">{{ activity.description }}</p>
+                    </div>
+                    <div class="activity-amount">৳{{ activity.amount }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p class="empty-icon">📭</p>
+            <p class="empty-text">No recent activity yet</p>
+            <p class="empty-subtext">Start by adding your first expense!</p>
+        </div>
+    {% endif %}
+    </div>
+</div>
+
+<!-- Spending Analytics -->
+{% if category_data or monthly_data %}
+<div class="analytics-section collapsible-section">
+    <div class="section-header" role="button" tabindex="0" aria-expanded="true" aria-controls="analytics-content" data-section="analytics">
+        <div class="analytics-title-group">
+            <h3>📊 Spending Analytics</h3>
+            <p class="analytics-subtitle">Visual insights into your spending patterns</p>
+        </div>
+        <div class="analytics-header-actions">
+            <button id="downloadPdfBtn" class="btn btn-primary" onclick="event.stopPropagation();">
+                📥 Download PDF
+            </button>
+            <span class="collapse-icon" aria-hidden="true">▼</span>
+        </div>
+    </div>
+    
+    <div class="section-content" id="analytics-content">
+    <div class="charts-container" id="chartsContainer">
+        <!-- Category Chart -->
+        {% if category_data %}
+        <div class="chart-wrapper">
+            <div class="chart-header">
+                <h4>💰 Spending by Category</h4>
+                <p class="chart-description">See where your money goes</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Monthly Chart -->
+        {% if monthly_data %}
+        <div class="chart-wrapper">
+            <div class="chart-header">
+                <h4>📅 Monthly Spending Trend</h4>
+                <p class="chart-description">Track your expenses over time</p>
+            </div>
+            <div class="chart-container">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ===== Collapsible Sections =====
+    (function initCollapsibleSections() {
+        const sections = document.querySelectorAll('.collapsible-section');
+        const STORAGE_KEY = 'FinBuddy_collapsedSections';
+        
+        // Check if mobile
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Get saved state from localStorage
+        function getSavedState() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+            } catch {
+                return {};
+            }
+        }
+        
+        // Save state to localStorage
+        function saveState(sectionId, isCollapsed) {
+            const state = getSavedState();
+            state[sectionId] = isCollapsed;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+        
+        // Toggle section
+        function toggleSection(section, forceState) {
+            const header = section.querySelector('.section-header');
+            const sectionId = header.dataset.section;
+            const isCurrentlyCollapsed = section.dataset.collapsed === 'true';
+            const newState = forceState !== undefined ? forceState : !isCurrentlyCollapsed;
+            
+            section.dataset.collapsed = newState;
+            header.setAttribute('aria-expanded', !newState);
+            
+            saveState(sectionId, newState);
+        }
+        
+        // Initialize each section
+        sections.forEach(section => {
+            const header = section.querySelector('.section-header');
+            const sectionId = header.dataset.section;
+            const savedState = getSavedState();
+            
+            // Determine initial state: use saved state if exists, otherwise default based on viewport
+            let initialCollapsed;
+            if (savedState.hasOwnProperty(sectionId)) {
+                initialCollapsed = savedState[sectionId];
+            } else {
+                // Default: Analytics collapsed on mobile, expanded on desktop
+                initialCollapsed = sectionId === 'analytics' && isMobile();
+            }
+            
+            // Set initial state
+            section.dataset.collapsed = initialCollapsed;
+            header.setAttribute('aria-expanded', !initialCollapsed);
+            
+            // Click handler
+            header.addEventListener('click', (e) => {
+                // Don't toggle if clicking the PDF button
+                if (e.target.closest('#downloadPdfBtn')) return;
+                toggleSection(section);
+            });
+            
+            // Keyboard handler
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleSection(section);
+                }
+            });
+        });
+        
+        // Handle resize - update default state for analytics if no saved preference
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const savedState = getSavedState();
+                sections.forEach(section => {
+                    const header = section.querySelector('.section-header');
+                    const sectionId = header.dataset.section;
+                    
+                    // Only auto-adjust if user hasn't manually set a preference
+                    if (!savedState.hasOwnProperty(sectionId) && sectionId === 'analytics') {
+                        const shouldCollapse = isMobile();
+                        section.dataset.collapsed = shouldCollapse;
+                        header.setAttribute('aria-expanded', !shouldCollapse);
+                    }
+                });
+            }, 250);
+        });
+    })();
+</script>
+
+{% if category_data or monthly_data %}
+<script>
+    // Robust theme detection function
+    function getCurrentTheme() {
+        // Check data-theme attribute on body or documentElement
+        const bodyTheme = document.body.getAttribute('data-theme');
+        const htmlTheme = document.documentElement.getAttribute('data-theme');
+        const datasetTheme = document.body.dataset.theme || document.documentElement.dataset.theme;
+        
+        // Check localStorage as fallback
+        const storedTheme = localStorage.getItem('FinBuddy_theme');
+        
+        // Check computed CSS variable as final fallback
+        const computedBg = getComputedStyle(document.body).getPropertyValue('--bg-primary').trim();
+        const isCssDark = computedBg === '#352e2e';
+        
+        return bodyTheme || htmlTheme || datasetTheme || storedTheme || (isCssDark ? 'dark' : 'light');
+    }
+    
+    // Get current theme
+    let currentTheme = getCurrentTheme();
+    let isDark = currentTheme === 'dark';
+    
+    // Theme-aware colors with brighter text for dark mode
+    function getThemeColors() {
+        const dark = getCurrentTheme() === 'dark';
+        return {
+            textColor: dark ? '#ececec' : '#333',
+            gridColor: dark ? 'rgba(231, 76, 60, 0.15)' : 'rgba(0, 0, 0, 0.1)',
+            bgColor: dark ? '#3a3a3a' : '#ffffff'
+        };
+    }
+    
+    let { textColor, gridColor, bgColor } = getThemeColors();
+    
+    // Store chart instances for recreation
+    window.categoryChart = null;
+    window.monthlyChart = null;
+    
+    // Chart.js default options
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    
+    {% if category_data %}
+    // Category Chart Data
+    const categoryData = {{ category_data|tojson }};
+    const categoryLabels = Object.keys(categoryData);
+    const categoryValues = Object.values(categoryData);
+    
+    // Category color mapping function - dark mode uses high-contrast palette with red glow theme
+    function getCategoryColors() {
+        const dark = getCurrentTheme() === 'dark';
+        return dark ? {
+            'Food': '#ef233c',           // Bright red
+            'Transport': '#c0c0c0',       // Light silver
+            'Entertainment': '#a01a3a',   // Deep maroon
+            'Shopping': '#d3d3d3',        // Very light gray
+            'Bills': '#3d3d3d',           // Dark charcoal (lighter than near-black for visibility)
+            'Health': '#dc143c',          // Crimson red
+            'Education': '#909090',       // Light medium gray
+            'Dues': '#b8b8b8',            // Bright silver gray
+            'Owes': '#8b1538',            // Dark red-maroon
+            'Other': '#707070'            // Medium gray
+        } : {
+            'Food': '#ff6b6b',
+            'Transport': '#4299e1',
+            'Entertainment': '#9f7aea',
+            'Shopping': '#ed8936',
+            'Bills': '#48bb78',
+            'Health': '#f56565',
+            'Education': '#667eea',
+            'Dues': '#38b2ac',
+            'Owes': '#fc8181',
+            'Other': '#718096'
+        };
+    }
+    
+    const categoryColors = getCategoryColors();
+    
+    const categoryBgColors = categoryLabels.map(label => categoryColors[label] || (getCurrentTheme() === 'dark' ? '#666666' : '#718096'));
+    
+    // Create Category Chart (Doughnut)
+    function createCategoryChart() {
+        const colors = getThemeColors();
+        const catColors = getCategoryColors();
+        const categoryBgColors = categoryLabels.map(label => catColors[label] || (getCurrentTheme() === 'dark' ? '#666666' : '#718096'));
+            
+            if (window.categoryChart) {
+                window.categoryChart.destroy();
+            }
+            
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            window.categoryChart = new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryValues,
+                backgroundColor: categoryBgColors,
+                borderColor: getCurrentTheme() === 'dark' ? '#2d2d2d' : '#ffffff',
+                borderWidth: getCurrentTheme() === 'dark' ? 2 : 3,
+                hoverOffset: 8,
+                hoverBorderColor: getCurrentTheme() === 'dark' ? '#e74c3c' : '#ffffff',
+                hoverBorderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 13,
+                            weight: '600'
+                        },
+                        color: colors.textColor,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                tooltip: {
+                    backgroundColor: getCurrentTheme() === 'dark' ? '#2d2d2d' : 'rgba(0, 0, 0, 0.8)',
+                    titleColor: getCurrentTheme() === 'dark' ? '#ececec' : '#fff',
+                    bodyColor: getCurrentTheme() === 'dark' ? '#d0d0d0' : '#fff',
+                    borderColor: getCurrentTheme() === 'dark' ? '#e74c3c' : 'transparent',
+                    borderWidth: getCurrentTheme() === 'dark' ? 1 : 0,
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: ৳${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    }
+    {% endif %}
+    
+    {% if monthly_data %}
+    // Monthly Chart Data
+    const monthlyData = {{ monthly_data|tojson }};
+    const monthlyLabels = Object.keys(monthlyData);
+    const monthlyValues = Object.values(monthlyData);
+    
+    // Create Monthly Chart (Bar)
+    function createMonthlyChart() {
+        if (window.monthlyChart) {
+            window.monthlyChart.destroy();
+        }
+        const colors = getThemeColors();
+        const dark = getCurrentTheme() === 'dark';
+        
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        window.monthlyChart = new Chart(monthlyCtx, {
+        type: 'bar',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'Spending (৳)',
+                data: monthlyValues,
+                backgroundColor: dark ? 'rgba(220, 20, 60, 0.75)' : 'rgba(102, 126, 234, 0.7)',
+                borderColor: dark ? '#a01a3a' : '#667eea',
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false,
+                hoverBackgroundColor: dark ? 'rgba(239, 35, 60, 0.85)' : 'rgba(102, 126, 234, 0.85)',
+                hoverBorderColor: dark ? '#e74c3c' : '#667eea',
+                hoverBorderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: colors.gridColor,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: colors.textColor,
+                        font: {
+                            size: 11
+                        },
+                        callback: function(value) {
+                            return '৳' + value;
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: colors.textColor,
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: dark ? '#2d2d2d' : 'rgba(0, 0, 0, 0.8)',
+                    titleColor: dark ? '#ececec' : '#fff',
+                    bodyColor: dark ? '#d0d0d0' : '#fff',
+                    borderColor: dark ? '#e74c3c' : 'transparent',
+                    borderWidth: dark ? 1 : 0,
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: function(context) {
+                            return 'Spent: ৳' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+        });
+    }
+    {% endif %}
+    
+    // Initialize charts after DOM is ready and theme is set
+    function initCharts() {
+        // Use requestAnimationFrame to ensure theme is applied to DOM
+        requestAnimationFrame(() => {
+            {% if category_data %}
+            createCategoryChart();
+            {% endif %}
+            
+            {% if monthly_data %}
+            createMonthlyChart();
+            {% endif %}
+        });
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCharts);
+    } else {
+        initCharts();
+    }
+    
+    // Listen for theme changes and recreate charts
+    window.addEventListener('themeChanged', function(e) {
+        currentTheme = e.detail.theme;
+        isDark = currentTheme === 'dark';
+        
+        const colors = getThemeColors();
+        textColor = colors.textColor;
+        gridColor = colors.gridColor;
+        bgColor = colors.bgColor;
+        
+        Chart.defaults.color = textColor;
+        Chart.defaults.borderColor = gridColor;
+        
+        {% if category_data %}
+        createCategoryChart();
+        {% endif %}
+        
+        {% if monthly_data %}
+        createMonthlyChart();
+        {% endif %}
+    });
+    
+    // PDF Download Functionality
+    document.getElementById('downloadPdfBtn')?.addEventListener('click', async function() {
+        const btn = this;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ Generating...';
+        btn.disabled = true;
+        
+        try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            // Note: jsPDF uses built-in fonts. For Luckiest Guy in PDFs,
+            // you would need to embed the font as base64 using pdf.addFont().
+            // Using bold Helvetica as fallback for consistent branding look.
+
+            // Helper: draw branded header
+            function drawHeader(doc) {
+                doc.setFillColor(102, 126, 234);
+                doc.rect(0, 8, 210, 10, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16);
+                // FinBuddy brand text - using bold for emphasis
+                doc.text('FinBuddy', 105, 15, { align: 'center' });
+            }
+
+            // Helper: draw footer with page number
+            function drawFooter(doc, pageNum) {
+                doc.setTextColor(120, 120, 120);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.text('FinBuddy • Generated ' + new Date().toLocaleDateString(), 10, 290);
+                doc.text('Page ' + pageNum, 200, 290, { align: 'right' });
+            }
+
+            // Draw header on first page
+            drawHeader(pdf);
+            
+            // Add title
+            pdf.setFontSize(20);
+            pdf.setTextColor(102, 126, 234);
+            pdf.text('Spending Analytics Report', 105, 30, { align: 'center' });
+            
+            pdf.setFontSize(10);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text('Generated on: ' + new Date().toLocaleDateString(), 105, 38, { align: 'center' });
+            
+            let yPosition = 48;
+
+            // Page 1: Expense statements (recent activities)
+            pdf.setFontSize(14);
+            pdf.setTextColor(50, 50, 50);
+            pdf.text('Expense Statements', 105, yPosition, { align: 'center' });
+            yPosition += 8;
+
+            // Table header
+            pdf.setFontSize(10);
+            pdf.setTextColor(80, 80, 80);
+            pdf.text('Type', 10, yPosition);
+            pdf.text('Description', 35, yPosition);
+            pdf.text('Amount (৳)', 145, yPosition);
+            pdf.text('Date', 175, yPosition);
+            pdf.setDrawColor(200);
+            pdf.line(10, yPosition + 2, 200, yPosition + 2);
+            yPosition += 8;
+
+            const activities = {{ recent_activities|tojson }} || [];
+            pdf.setTextColor(40, 40, 40);
+            pdf.setFontSize(10);
+
+            const maxDescWidth = 100; // mm
+            const rowHeight = 6; // mm per row
+
+            for (let i = 0; i < activities.length; i++) {
+                const a = activities[i];
+                const type = (a.type || '').toString();
+                const amount = (a.amount || '').toString();
+                const date = (a.date || '').toString();
+                let desc = (a.description || '').toString();
+
+                // Truncate description to fit assumed width (simple cut; jsPDF text sizing varies)
+                if (desc.length > 70) {
+                    desc = desc.slice(0, 67) + '…';
+                }
+
+                // If near bottom, add new page for statements
+                if (yPosition > 270) {
+                    pdf.addPage();
+                    yPosition = 20;
+                }
+
+                pdf.text(type, 10, yPosition);
+                pdf.text(desc, 35, yPosition);
+                pdf.text(amount, 145, yPosition, { align: 'left' });
+                pdf.text(date, 175, yPosition, { align: 'left' });
+                yPosition += rowHeight;
+            }
+
+            // Always start charts on a new page
+            pdf.addPage();
+            drawHeader(pdf);
+            yPosition = 20;
+            
+            {% if category_data %}
+            // Page 2+: Category Chart
+            const categoryCanvas = document.getElementById('categoryChart');
+            if (categoryCanvas) {
+                const categoryImg = await html2canvas(categoryCanvas, {
+                    backgroundColor: isDark ? '#3a3a3a' : '#ffffff',
+                    scale: 2
+                });
+                
+                const categoryImgData = categoryImg.toDataURL('image/png');
+                const imgWidth = 160;
+                const imgHeight = (categoryImg.height * imgWidth) / categoryImg.width;
+                
+                pdf.setFontSize(14);
+                pdf.setTextColor(50, 50, 50);
+                pdf.text('Spending by Category', 105, yPosition, { align: 'center' });
+                yPosition += 10;
+                
+                pdf.addImage(categoryImgData, 'PNG', 25, yPosition, imgWidth, imgHeight);
+                yPosition += imgHeight + 15;
+            }
+            {% endif %}
+            
+            {% if monthly_data %}
+            // Monthly Chart (next section)
+            const monthlyCanvas = document.getElementById('monthlyChart');
+            if (monthlyCanvas) {
+                const monthlyImg = await html2canvas(monthlyCanvas, {
+                    backgroundColor: isDark ? '#3a3a3a' : '#ffffff',
+                    scale: 2
+                });
+                
+                const monthlyImgData = monthlyImg.toDataURL('image/png');
+                const imgWidth = 160;
+                const imgHeight = (monthlyImg.height * imgWidth) / monthlyImg.width;
+                
+                pdf.setFontSize(14);
+                pdf.setTextColor(50, 50, 50);
+                pdf.text('Monthly Spending Trend', 105, yPosition, { align: 'center' });
+                yPosition += 10;
+                
+                pdf.addImage(monthlyImgData, 'PNG', 25, yPosition, imgWidth, imgHeight);
+            }
+            {% endif %}
+            
+            // Save PDF
+            const fileName = 'spending-analytics-' + new Date().toISOString().split('T')[0] + '.pdf';
+            // Add footer to all pages
+            const pageCount = pdf.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                pdf.setPage(i);
+                drawFooter(pdf, i);
+            }
+            pdf.save(fileName);
+            
+            btn.innerHTML = '✅ Downloaded!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 2000);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            btn.innerHTML = '❌ Error';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 2000);
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}

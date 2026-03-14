@@ -1,0 +1,145 @@
+/* Profile Onboarding Page - Standalone (No Navbar) */
+
+html, body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.onboarding-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.onboarding-card {
+    background-color: linear-gradient(150deg, rgb(28, 79, 79), rgb(10, 68, 68));
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 2px rgba(7, 80, 54, 0.12), 0 4px 16px rgba(46, 151, 142, 0.08);
+}
+
+[data-theme="dark"] .onboarding-card {
+    box-shadow: 0 8px 2px rgba(231, 76, 60, 0.2), 0 4px 16px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(150deg, rgb(236, 186, 186), rgb(185, 140, 140));
+}
+
+.onboarding-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.onboarding-logo {
+    font-family: 'Luckiest Guy', cursive;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: rgb(14, 58, 79);
+    font-weight: 400;
+}
+.fb-brand{
+    color:#0c304c;
+}
+[data-theme="dark"] .fb-brand{
+    color:rgb(54, 6, 25);
+}
+
+.onboarding-title {
+    font-size: 1.5rem;
+    color: rgb(17, 69, 94);
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+[data-theme="dark"] .onboarding-title{
+    color: rgb(101, 15, 41);
+}
+
+.onboarding-subtitle {
+    font-size: 1rem;
+    color: rgb(9, 72, 28);
+    margin: 0;
+}
+[data-theme="dark"] .onboarding-subtitle{
+    color: rgb(79, 46, 11);
+}
+
+/* Flash messages within onboarding */
+.onboarding-container .flash-messages {
+    margin-bottom: 1.5rem;
+}
+
+.onboarding-container .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.onboarding-container .alert-danger {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: var(--accent-red);
+    border: 1px solid var(--accent-red);
+}
+
+.onboarding-container .alert-success {
+    background-color: rgba(72, 187, 120, 0.15);
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+}
+
+/* Form adjustments for onboarding */
+.onboarding-card .profile-form {
+    margin-top: 0;
+}
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: rgb(5, 58, 54) !important;
+    font-size: 0.95rem;
+    text-align: center;
+}
+[data-theme="dark"] .form-group label {
+    color: #4c0c0c !important;
+}
+
+.onboarding-card .form-grid {
+    gap: 1.25rem;
+}
+
+.onboarding-card .form-actions {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    width: 100%;
+    max-width: 320px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    body {
+        padding: 1rem;
+    }
+
+    .onboarding-card {
+        padding: 1.5rem;
+    }
+
+    .onboarding-logo {
+        font-size: 1.75rem;
+    }
+
+    .onboarding-title {
+        font-size: 1.25rem;
+    }
+}

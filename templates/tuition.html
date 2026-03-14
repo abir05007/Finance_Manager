@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+
+{% block title %}Tuition - FinBuddy{% endblock %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/tuition.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="expense-page">
+    <div class="page-header">
+        <h1 class="page-title">🎓 Tuition Management</h1>
+        <p class="page-subtitle">Track your student classes and schedule efficiently</p>
+        <div class="header-stats">
+            <div class="stat-item">
+                <span class="stat-label">Total Students</span>
+                <span class="stat-value">{{ total_students }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Progress Today</span>
+                <span class="stat-value">{{ total_completed_classes }}/{{ total_classes }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total Income</span>
+                <span class="stat-value">৳{{ total_amount }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="tuition-layout">
+        <!-- Left Panel: Tuition List -->
+        <div class="left-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="section-title">📚 Your Students</h2>
+                </div>
+                <a href="{{ url_for('tuition.add_tuition') }}" class="btn-add-compact">
+                    ➕ Add New Student
+                </a>
+            </div>
+            
+            {% if tuition_list %}
+                <div class="tuition-list-scrollable">
+                    {% for entry in tuition_list %}
+                        <div class="tuition-entry">
+                            <div class="tuition-details">
+                                <div class="student-header">
+                                    <h3 class="student-name-header">👤 {{ entry.student_name }}</h3>
+                                    <span class="tuition-fee">৳{{ (entry.amount) | round(2) }}</span>
+                                </div>
+                                <div class="progress-section">
+                                    <div class="progress-info">
+                                        <span class="progress-label">Classes Completed</span>
+                                        <span class="progress-text">{{ entry.total_completed }}/{{ entry.total_days }}</span>
+                                    </div>
+                                    <div class="progress-bar-wrapper">
+                                        {% set progress_percent = (entry.total_completed / entry.total_days * 100) | round(0) | int if entry.total_days > 0 else 0 %}
+                                        <div class="progress-bar-fill" style="width: {{ progress_percent }}%;">
+                                            <span class="progress-percentage">{{ progress_percent }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="entry-meta">
+                                    <div class="meta-item">
+                                        <span class="meta-icon">📍</span>
+                                        <span class="meta-text">{{ entry.address }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="entry-actions">
+                                
+                                <a href="{{ url_for('tuition.reschedule_class', record_id=entry.id) }}" class="action-btn reschedule-btn" title="Reschedule this class">
+                                    <span class="action-icon">📅</span>
+                                    <span class="action-text">Reschedule</span>
+                                </a>
+                                <a href="{{ url_for('tuition.edit_tuition', record_id=entry.id) }}" class="action-btn edit-btn" title="Edit student details">
+                                    <span class="action-icon">✏️</span>
+                                    <span class="action-text">Edit</span>
+                                </a>
+                                <form method="POST" action="{{ url_for('tuition.delete_tuition', record_id=entry.id) }}" style="margin: 0;" class="delete-form">
+                                    <button type="submit" class="action-btn delete-btn" onclick="return confirm('Are you sure? This cannot be undone.');" title="Delete this student">
+                                        <span class="action-icon">🗑️</span>
+                                        <span class="action-text">Delete</span>
+                                    </button>
+                                </form>
+                                {% if entry.total_completed >= entry.total_days %}
+                                <form method="POST" action="{{ url_for('tuition.update_completed', record_id=entry.id, action='clear') }}" style="margin: 0; width: 100%;">
+                                    <button type="submit" class="action-btn btn-start-month" title="Reset progress for new month">
+                                        <span class="action-icon">🔄</span>
+                                        <span class="action-text">Start New Month</span>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p class="empty-icon">📚</p>
+                    <p class="empty-message">No Students Yet</p>
+                    <p class="empty-hint">Start by adding your first tuition student to track their progress</p>
+                    <div class="empty-cta">
+                        <a href="{{ url_for('tuition.add_tuition') }}" class="btn-empty-action">
+                            <span>✨</span>
+                            <span>Add Your First Student</span>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Panel: Calendar and Reschedules -->
+        <div class="right-panel">
+            <!-- Weekly Calendar -->
+            <div class="calendar-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <h2 class="section-title" style="margin-bottom: 0;">📅 Weekly Schedule</h2>
+                        {% if recent_reschedules %}
+                        <div class="reschedule-count-box">Rescheduled: {{ recent_reschedules|length }}</div>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('tuition.export_routine_pdf') }}" class="btn-export-pdf" title="Export as PDF">
+                        📄 Export Weekly Routine
+                    </a>
+                </div>
+                {% if tuition_list %}
+                    <table class="weekly-schedule">
+                        <thead>
+                            <tr>
+                                <th class="day-column">Day</th>
+                                <th class="schedule-column">Classes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] %}
+                            {% for day_idx in ordered_days %}
+                            <tr {% if day_idx == current_day_index %}class="current-day-row"{% endif %}>
+                                <td class="day-name">
+                                    <div class="day-header">
+                                        <span class="day-name-text">{{ days[day_idx] }}</span>
+                                        {% if day_idx == current_day_index %}
+                                        <span class="today-badge">Today</span>
+                                        {% endif %}
+                                        <span class="day-date">{{ ordered_dates[loop.index0].strftime('%d %b %Y') }}</span>
+                                    </div>
+                                </td>
+                                <td class="schedule-cell">
+                                    {% if schedule_by_day[day_idx] %}
+                                    <div class="schedule-tiles-wrapper">
+                                        {% for entry in schedule_by_day[day_idx] %}
+                                        <div class="schedule-tile" id="tile-{{ entry.id }}">
+                                            <div class="tile-top">
+                                                {% if entry.tuition_time %}
+                                                <div class="tile-time">⏰ {{ entry.tuition_time }}</div>
+                                                {% endif %}
+                                                <div class="tile-actions" id="actions-{{ entry.id }}" {% if entry.total_completed >= entry.total_days %}style="display: none !important;"{% endif %}>
+                                                    {% set today = now.date() %}
+                                                    {% if entry.completed_date and entry.completed_date == today %}
+                                                        <!-- Hide tick, show undo -->
+                                                        <form method="POST" action="{{ url_for('tuition.update_completed', record_id=entry.id, action='undo') }}" style="display:inline;">
+                                                            <button type="submit" class="btn-tile btn-undo" title="Undo today's completion">↩️ Undo</button>
+                                                        </form>
+                                                    {% else %}
+                                                        <form method="POST" action="{{ url_for('tuition.update_completed', record_id=entry.id, action='increment') }}" style="display:inline;">
+                                                            <button type="submit" class="btn-tile btn-tick" {% if entry.total_completed >= entry.total_days %}disabled{% endif %} title="Mark as completed">✓</button>
+                                                        </form>
+                                                        <button type="button" class="btn-tile btn-skip" onclick="openRescheduleModal({{ entry.id }}, '{{ entry.student_name }}', '{{ entry.tuition_time }}', {{ entry.amount }}, {{ entry.total_days }})" title="Skip/Reschedule">⏭️</button>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="tile-completed" id="completed-{{ entry.id }}" {% if entry.total_completed < entry.total_days %}style="display: none;"{% endif %}>Completed</div>
+                                            </div>
+                                            <div class="tile-header">
+                                                <div class="tile-student">{{ entry.student_name }}</div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <span class="empty-day">No classes</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="empty-hint">Add tuition entries to see your schedule</p>
+                {% endif %}
+            </div>
+
+            <!-- Rescheduled Classes Section -->
+            <div class="reschedule-section">
+                <h2 class="section-title">🔄 Recent Reschedules</h2>
+                {% if recent_reschedules %}
+                    <div class="reschedule-list-compact">
+                        {% for reschedule in recent_reschedules %}
+                        <div class="reschedule-item-compact">
+                            <div class="reschedule-info-compact">
+                                <strong>{{ reschedule.tuition.student_name }}</strong>
+                                <div class="reschedule-dates-compact">
+                                    <span>{{ reschedule.original_date.strftime('%d %b') }}</span>
+                                    <span class="arrow-small">→</span>
+                                    <span>{{ reschedule.new_date.strftime('%d %b') }}</span>
+                                </div>
+                            </div>
+                            <div class="reschedule-actions-compact">
+                                <span class="status-badge-small status-{{ reschedule.reschedule_status }}">
+                                    {% if reschedule.reschedule_status == 'pending' %}⏳{% elif reschedule.reschedule_status == 'confirmed' %}✓{% elif reschedule.reschedule_status == 'completed' %}✅{% else %}✕{% endif %}
+                                </span>
+                                {% if reschedule.reschedule_status in ['pending', 'confirmed'] %}
+                                <a href="{{ url_for('tuition.edit_reschedule', reschedule_id=reschedule.id) }}" class="btn-reschedule-action btn-edit" title="Edit">✏️</a>
+                                <form method="POST" action="{{ url_for('tuition.mark_reschedule_completed', reschedule_id=reschedule.id) }}" style="display: inline; margin: 0;">
+                                    <button type="submit" class="btn-reschedule-action btn-complete" title="Mark Completed" onclick="return confirm('Mark this class as completed? This will also increment the progress counter.');">✓</button>
+                                </form>
+                                <form method="POST" action="{{ url_for('tuition.cancel_reschedule', reschedule_id=reschedule.id) }}" style="display: inline; margin: 0;">
+                                    <button type="submit" class="btn-reschedule-action btn-cancel" title="Cancel" onclick="return confirm('Cancel this reschedule?');">✕</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-hint">No recent reschedules</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div id="rescheduleModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeRescheduleModal()">&times;</span>
+        <div class="modal-header">
+            <h2 id="modalTitle">Reschedule Class?</h2>
+        </div>
+        <div class="modal-body">
+            <div class="random-message-box">
+                <p id="randomMessage"></p>
+            </div>
+            <div class="modal-student-info">
+                <p><strong>Student:</strong> <span id="modalStudent"></span></p>
+                <p><strong>Time:</strong> <span id="modalTime"></span></p>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="btn-modal btn-reschedule-confirm" onclick="goToReschedule()">📅 Reschedule</button>
+            <button type="button" class="btn-modal btn-cancel-modal" onclick="closeRescheduleModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Increment Form (hidden) -->
+<form id="progressForm" method="POST" action="" style="display: none;">
+    <!-- Hidden form for incrementing progress -->
+</form>
+
+<script>
+// Guilt-based messages for skipping classes
+function getGuiltMessages(perClassCost) {
+    return [
+        `Ouch! You just burned ${perClassCost} BDT. Hope the nap was worth it.`,
+        `Congratulations, you just paid to do nothing.`,
+        `Your bank account is crying right now.`,
+        `Imagine what else you could have bought with ${perClassCost} BDT...`,
+        `Calculated decision? or just lazy?`,
+        `That's one less treat for yourself this month.`
+    ];
+}
+
+function getGuiltMessage(totalAmount, totalDays) {
+    const perClassCost = Math.round(totalAmount / totalDays);
+    
+    // If the per-class amount is huge, give a special message
+    if (perClassCost > 2000) {
+        return `⚠️ ARE YOU CRAZY?! That's ${perClassCost} BDT per class down the drain!`;
+    }
+    
+    // Pick a random message from the variations
+    const messages = getGuiltMessages(perClassCost);
+    return messages[Math.floor(Math.random() * messages.length)];
+}
+
+let currentRecordId = null;
+let currentRecordPage = null;
+
+function openRescheduleModal(recordId, studentName, tuitionTime, totalAmount, totalDays) {
+    currentRecordId = recordId;
+    const modal = document.getElementById('rescheduleModal');
+    document.getElementById('modalTitle').textContent = '❓ ' + studentName + ' - Reschedule Class?';
+    document.getElementById('randomMessage').textContent = getGuiltMessage(totalAmount, totalDays);
+    document.getElementById('modalStudent').textContent = studentName;
+    document.getElementById('modalTime').textContent = tuitionTime || 'Not specified';
+    modal.style.display = 'flex';
+}
+
+function closeRescheduleModal() {
+    const modal = document.getElementById('rescheduleModal');
+    modal.style.display = 'none';
+    currentRecordId = null;
+}
+
+function goToReschedule() {
+    if (currentRecordId) {
+        window.location.href = `/tuition/reschedule/${currentRecordId}`;
+    }
+}
+
+function incrementProgress(recordId, studentName, completed, total) {
+    if (completed >= total) {
+        alert('✓ All classes completed for ' + studentName + '!');
+        return;
+    }
+    
+    const newProgress = completed + 1;
+    if (confirm(`Mark ${studentName}'s class as completed?`)) {
+        // Disable the button and hide actions to prevent double clicks
+        const tickButton = event.target;
+        tickButton.disabled = true;
+        
+        const actionsDiv = document.getElementById(`actions-${recordId}`);
+        if (actionsDiv) {
+            actionsDiv.style.pointerEvents = 'none';
+            actionsDiv.style.opacity = '0.5';
+        }
+        
+        const form = document.getElementById('progressForm');
+        form.action = `/tuition/update-completed/${recordId}/increment`;
+        form.method = 'POST';
+        
+        // Ensure form is submitted and page reloads
+        setTimeout(() => {
+            form.submit();
+        }, 100);
+    }
+}
+
+// Ensure completed items have buttons hidden on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const completedBadges = document.querySelectorAll('.tile-completed[style*="display"]');
+    completedBadges.forEach(badge => {
+        if (badge.style.display !== 'none') {
+            const tileId = badge.id.replace('completed-', '');
+            const actionsDiv = document.getElementById(`actions-${tileId}`);
+            if (actionsDiv) {
+                actionsDiv.style.display = 'none !important';
+            }
+        }
+    });
+});
+
+// Close modal when clicking outside of it
+window.onclick = function(event) {
+    const modal = document.getElementById('rescheduleModal');
+    if (event.target == modal) {
+        closeRescheduleModal();
+    }
+}
+</script>
+{% endblock %}

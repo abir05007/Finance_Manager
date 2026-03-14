@@ -1,0 +1,43 @@
+# Virtual environment
+.venv/
+.venv/
+venv/
+
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.py[cod]
+*$py.class
+*.pyc
+*.pyc
+*.so
+
+# Database
+*.db
+database.db
+database.db
+finance.db
+instance/
+secure/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Anonymized exports (local analytics only)
+exports/
