@@ -3,6 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { sequelize } = require('./models');
 const authRouter = require('./routes/auth_node');
+const dashboardRouter = require('./routes/dashboard_node');
+const expenseRouter = require('./routes/expense_node');
 
 dotenv.config();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', authRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/expense', expenseRouter);
 
 // Serve static files to keep the structure same for now
 app.use('/static', express.static('static'));
