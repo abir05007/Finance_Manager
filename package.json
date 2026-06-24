@@ -12,13 +12,26 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "dotenv": "^16.0.3"
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.2",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.22.0",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abir05007/Finance_Manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abir05007/Finance_Manager/issues"
+  },
+  "homepage": "https://github.com/abir05007/Finance_Manager#readme"
 }
