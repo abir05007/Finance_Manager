@@ -1,31 +1,19 @@
-Refactor this Flask project from a finance tracker into a dual-role (Student/Teacher) Tuition & Classroom Management system.
-
-### 1. Code Removal
-- Delete all models, routes, and templates related to personal expense tracking and group bill splitting.
-
-### 2. User Model & UX Architecture
-- Update the User model to support a unified profile that can hold BOTH 'Student' and 'Teacher' roles concurrently.
-- Enforce a strict UX boundary using a session-based role toggle (e.g., `session['current_role']`) so the user never confuses the Student and Teacher dashboards.
-
-### 3. Feature Specifications
-- **Tuition Tracking:** - Student View: Track payment history and upcoming deadlines.
-  - Teacher View: Track incoming invoices and student payment statuses.
-- **Classroom Groups:** Create a Group model linking one Teacher to multiple Students.
-  - Inside Groups, implement: Real-time chat, file storage (notes), quiz/exam management, and a group-specific tuition ledger.
-
-Please update the database schema, Flask routes, and base HTML layout accordingly.
 # Finance_Manager
 
 A personal finance management web application for students to track expenses, manage tuition income, split group bills, and get AI-assisted financial insights.
 
-Repository: https://github.com/fahin99/Finance_Manager
-Maintainer: @fahin99
+Repository: https://github.com/abir05007/Finance_Manager
+Maintainer: @abir05007
 
 ---
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.1.2-green)
 ![License](https://img.shields.io/badge/License-Educational-orange)
+
+## Overview
+
+Finance_Manager is a Flask-based financial management platform designed for student workflows. It combines personal expense tracking, group bill splitting, tuition management, reminders, analytics, and an AI assistant into a single dashboard.
 
 ## Features
 
@@ -108,7 +96,7 @@ Finance_Manager/
 ## Quick Start (Windows)
 
 ```bash
-git clone https://github.com/fahin99/Finance_Manager.git
+git clone https://github.com/abir05007/Finance_Manager.git
 cd Finance_Manager
 setup.bat
 ```
@@ -163,8 +151,6 @@ python app.py
 5. Open the app
 
 http://localhost:5000
-
----
 
 ## API Documentation
 
